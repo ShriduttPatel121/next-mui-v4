@@ -1,11 +1,10 @@
 import React from "react";
 import { makeStyles, Typography, Paper, Avatar, Box } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
-import { useRouter } from "next/router";
 import { grey } from "@material-ui/core/colors";
 import { CalendarToday, LocationOn } from "@material-ui/icons";
 
-import { getEventById } from "../../dummy-data";
+import { getEventById, getFeaturedEvents } from "../../helpers/api-util";
 
 const useStyles = makeStyles((theme) => {
   return {
@@ -49,10 +48,9 @@ const useStyles = makeStyles((theme) => {
   };
 });
 
-const EventDetailsPage = (props) => {
-  const router = useRouter();
+const EventDetailsPage = ({ event }) => {
   const classes = useStyles();
-  const event = getEventById(router.query.eventId);
+  //const event = getEventById(router.query.eventId);
 
   const formatedDate = new Date(event.date).toLocaleDateString('en-IN', {
     day: "numeric",
@@ -65,9 +63,9 @@ const EventDetailsPage = (props) => {
   }
 
   return (
-    <Box className={classes.root}>
-      <Box className={classes.headerBox}>
-        <Box style={{transform:"translateY(15%)"}}>
+    <div className={classes.root}>
+      <div className={classes.headerBox}>
+        <div style={{transform:"translateY(15%)"}}>
         <Typography variant="h2"  mt={10} mb={1}>
           {event.title}
         </Typography>
@@ -92,22 +90,39 @@ const EventDetailsPage = (props) => {
             </Box>
           </Box>
         </Paper>
-        <Box className={classes.eventDescription}>
+        <div className={classes.eventDescription}>
             <Typography variant="h5" >
                 {event.description}
             </Typography>
-        </Box>
-        </Box>
-      </Box>
-      <Box className={classes.bodyBox}>
-          <Box>
+        </div>
+        </div>
+      </div>
+      <div className={classes.bodyBox}>
+          <div>
 
-          </Box>
-      </Box>
-    </Box>
+          </div>
+      </div>
+    </div>
   );
 };
 
-EventDetailsPage.propTypes = {};
-
 export default EventDetailsPage;
+
+export async function getStaticProps(context) {
+  const { params } = context;
+  const event = await getEventById(params.eventId);
+  return {
+    props: {
+      event
+    }
+  }
+}
+
+export async function getStaticPaths() {
+  const events = await getFeaturedEvents();
+  const paramAry = events.map(e => ({ params: { eventId: e.id }}));
+  return {
+    paths: paramAry,
+    fallback: 'blocking'
+  }
+}

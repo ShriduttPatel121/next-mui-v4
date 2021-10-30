@@ -3,31 +3,28 @@ import PropTypes from 'prop-types';
 import { Button, Typography } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import { useRouter } from 'next/router';
-import { getFilteredEvents, months } from '../../dummy-data';
+import { months } from '../../dummy-data';
+import { getFilteredEvents } from '../../helpers/api-util';
 import EventList from '../../components/events/eventList';
 import { Container } from '@material-ui/core';
 
-const FilteredEventsPage = props => {
+const FilteredEventsPage = ({ hasError = false, events, month }) => {
     const router = useRouter();
 
-    const filter = router.query.slug;
-    console.log(filter);
-    if (!filter) {
-        return <Alert severity="info">Loading...</Alert>
-    }
+    // const filter = router.query.slug;
+    // console.log(filter);
+    // if (!filter) {
+    //     return <Alert severity="info">Loading...</Alert>
+    // }
 
-    const year = +filter[0];
-    const month = +filter[1];
+    // const year = +filter[0];
+    // const month = +filter[1];
 
-    if(isNaN(year) || isNaN(month)) {
-        return <Alert severity="error">Wrong filter parameters</Alert>
-    }
+    // if(isNaN(year) || isNaN(month)) {
+    //     return <Alert severity="error">Wrong filter parameters</Alert>
+    // }
 
-    const events = getFilteredEvents({
-        year, month
-    })
-
-    if (!events || events.length === 0) {
+    if (hasError) {
         return <Alert severity="error">No events found</Alert>
     }
     return (
@@ -41,8 +38,29 @@ const FilteredEventsPage = props => {
     );
 };
 
-FilteredEventsPage.propTypes = {
-    
-};
-
 export default FilteredEventsPage;
+
+export async function getServerSideProps(context) {
+    
+    const { params } = context;
+
+    const filter = params.slug;
+    const year = +filter[0];
+    const month = +filter[1];
+
+    const filterdEvents = await getFilteredEvents({ year, month });
+    if(isNaN(year) || isNaN(month)) {
+        return {
+            notFound: true,
+            props: {
+                hasError: true
+            }
+        }
+    }
+    return {
+        props: {
+            events: filterdEvents,
+            month
+        }
+    }
+}
